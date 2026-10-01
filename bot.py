@@ -7,7 +7,7 @@ import os
 import json
 import time
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 warnings.filterwarnings('ignore')
 
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '8832925625:AAH40Jt4Ux2zDZXKA7cUW-LQtl6NtvcOhHY')
@@ -16,7 +16,7 @@ CHAT_ID = os.environ.get('CHAT_ID', '208377256')
 STOCKS = ['AAPL', 'TSLA', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'AMD', 'NFLX', 'SPY']
 ALL_US_STOCKS = ['AAPL','MSFT','GOOGL','GOOG','AMZN','META','NVDA','AMD','INTC','CSCO','ADBE','CRM','ORCL','IBM','QCOM','TXN','AVGO','NOW','INTU','AMAT','TSLA','F','GM','RIVN','LCID','NIO','XPEV','LI','NFLX','DIS','CMCSA','PARA','WBD','SPOT','ROKU','SHOP','SQ','PYPL','UBER','LYFT','DASH','ABNB','BKNG','JNJ','PFE','MRNA','BNTX','ABBV','UNH','LLY','MRK','JPM','BAC','WFC','GS','MS','V','MA','AXP','COF','WMT','TGT','COST','HD','LOW','NKE','SBUX','MCD','KO','PEP','BA','CAT','GE','HON','UPS','FDX','DAL','UAL','AAL','LUV','SPY','QQQ','IWM','DIA','VTI','VOO','XLF','XLE','XLK','XLV']
 
-STOCK_NAMES = {'AAPL':'Apple','TSLA':'Tesla','MSFT':'Microsoft','GOOGL':'Alphabet (Google)','GOOG':'Alphabet Class C','AMZN':'Amazon','META':'Meta (Facebook)','NVDA':'NVIDIA','AMD':'AMD','INTC':'Intel','CSCO':'Cisco','ADBE':'Adobe','CRM':'Salesforce','ORCL':'Oracle','IBM':'IBM','QCOM':'Qualcomm','TXN':'Texas Instruments','AVGO':'Broadcom','NOW':'ServiceNow','INTU':'Intuit','AMAT':'Applied Materials','F':'Ford','GM':'General Motors','RIVN':'Rivian','LCID':'Lucid','NIO':'NIO','XPEV':'XPeng','LI':'Li Auto','NFLX':'Netflix','DIS':'Disney','CMCSA':'Comcast','PARA':'Paramount','WBD':'Warner Bros','SPOT':'Spotify','ROKU':'Roku','SHOP':'Shopify','SQ':'Block','PYPL':'PayPal','UBER':'Uber','LYFT':'Lyft','DASH':'DoorDash','ABNB':'Airbnb','BKNG':'Booking','JNJ':'Johnson & Johnson','PFE':'Pfizer','MRNA':'Moderna','BNTX':'BioNTech','ABBV':'AbbVie','UNH':'UnitedHealth','LLY':'Eli Lilly','MRK':'Merck','JPM':'JPMorgan','BAC':'Bank of America','WFC':'Wells Fargo','GS':'Goldman Sachs','MS':'Morgan Stanley','V':'Visa','MA':'Mastercard','AXP':'American Express','COF':'Capital One','WMT':'Walmart','TGT':'Target','COST':'Costco','HD':'Home Depot','LOW':"Lowe's",'NKE':'Nike','SBUX':'Starbucks','MCD':"McDonald's",'KO':'Coca-Cola','PEP':'PepsiCo','BA':'Boeing','CAT':'Caterpillar','GE':'General Electric','HON':'Honeywell','UPS':'UPS','FDX':'FedEx','DAL':'Delta','UAL':'United Airlines','AAL':'American Airlines','LUV':'Southwest','SPY':'S&P 500 ETF','QQQ':'Nasdaq 100 ETF','IWM':'Russell 2000 ETF','DIA':'Dow Jones ETF','VTI':'Total Market ETF','VOO':'S&P 500 Vanguard','XLF':'Financial ETF','XLE':'Energy ETF','XLK':'Tech ETF','XLV':'Healthcare ETF'}
+STOCK_NAMES = {'AAPL':'Apple','TSLA':'Tesla','MSFT':'Microsoft','GOOGL':'Alphabet (Google)','GOOG':'Alphabet Class C','AMZN':'Amazon','META':'Meta (Facebook)','NVDA':'NVIDIA','AMD':'AMD','INTC':'Intel','CSCO':'Cisco','ADBE':'Adobe','CRM':'Salesforce','ORCL':'Oracle','IBM':'IBM','QCOM':'Qualcomm','TXN':'Texas Instruments','AVGO':'Broadcom','NOW':'ServiceNow','INTU':'Intuit','AMAT':'Applied Materials','F':'Ford','GM':'General Motors','RIVN':'Rivian','LCID':'Lucid','NIO':'NIO','XPEV':'XPeng','LI':'Li Auto','NFLX':'Netflix','DIS':'Disney','CMCSA':'Comcast','PARA':'Paramount','WBD':'Warner Bros','SPOT':'Spotify','ROKU':'Roku','SHOP':'Shopify','SQ':'Block','PYPL':'PayPal','UBER':'Uber','LYFT':'Lyft','DASH':'DoorDash','ABNB':'Airbnb','BKNG':'Booking','JNJ':'Johnson & Johnson','PFE':'Pfizer','MRNA':'Moderna','BNTX':'BioNTech','ABBV':'AbbVie','UNH':'UnitedHealth','LLY':'Eli Lilly','MRK':'Merck','JPM':'JPMorgan','BAC':'Bank of America','WFC':'Wells Fargo','GS':'Goldman Sachs','MS':'Morgan Stanley','V':'Visa','MA':'Mastercard','AXP':'American Express','COF':'Capital One','WMT':'Walmart','TGT':'Target','COST':'Costco','HD':'Home Depot','LOW':"Lowe's",'NKE':'Nike','SBUX':'Starbucks','MCD':"McDonald's",'KO':'Coca-Cola','PEP':'PepsiCo','BA':'Boeing','CAT':'Caterpillar','GE':'General Electric','HON':'Honeywell','UPS':'UPS','FDX':'FedEx','DAL':'Delta','UAL':'United Airlines','AAL':'American Airlines','LUV':'Southwest','SPY':'S&P 500 ETF','QQQ':'Nasdaq 100 ETF','IWM':'Russell 2000 ETF','DIA':'Dow Jones ETF','VTI':'Total Market ETF','VOO':'S&P 500 Vanguard','XLF':'Financial ETF','XLE':'Energy ETF','XLK':'Tech ETF','XLV':'Healthcare ETF','^VIX':'VIX (مؤشر الخوف)'}
 
 LEARNING_FILE = 'learning_data.json'
 SETTINGS_FILE = 'bot_settings.json'
@@ -69,6 +69,57 @@ def get_last_update_id():
 
 def save_last_update_id(update_id):
     save_json(UPDATE_FILE, {'last_update_id': update_id})
+
+def get_current_time():
+    """الحصول على التوقيت الدقيق (توقيت السعودية + UTC)"""
+    utc_now = datetime.now(timezone.utc)
+    saudi_tz = timezone(timedelta(hours=3))
+    saudi_now = utc_now.astimezone(saudi_tz)
+    return {
+        'utc': utc_now.strftime('%Y-%m-%d %H:%M:%S UTC'),
+        'saudi': saudi_now.strftime('%Y-%m-%d %H:%M:%S (توقيت السعودية)'),
+        'saudi_short': saudi_now.strftime('%H:%M'),
+        'date': saudi_now.strftime('%Y-%m-%d'),
+        'day_name': saudi_now.strftime('%A')
+    }
+
+def get_vix():
+    """الحصول على مؤشر VIX (مؤشر الخوف)"""
+    try:
+        vix = yf.Ticker('^VIX')
+        data = vix.history(period='5d')
+        if len(data) > 0:
+            current = float(data['Close'].iloc[-1])
+            if current < 15:
+                level = "منخفض (سوق هادئ)"
+                emoji = ""
+            elif current < 20:
+                level = "معتدل"
+                emoji = "🟡"
+            elif current < 30:
+                level = "مرتفع (سوق متوتر)"
+                emoji = "🟠"
+            else:
+                level = "مرتفع جداً (سوق خائف)"
+                emoji = ""
+            return {'value': round(current, 2), 'level': level, 'emoji': emoji}
+    except:
+        pass
+    return None
+
+def get_market_overview():
+    """نظرة عامة على السوق"""
+    try:
+        spy = yf.Ticker('SPY')
+        data = spy.history(period='5d')
+        if len(data) > 0:
+            current = float(data['Close'].iloc[-1])
+            prev = float(data['Close'].iloc[-2])
+            change = ((current - prev) / prev) * 100
+            return {'price': round(current, 2), 'change': round(change, 2)}
+    except:
+        pass
+    return None
 
 def fast_learning():
     settings = get_settings()
@@ -179,8 +230,12 @@ def send_daily_news_report():
     news = get_daily_news()
     if not news:
         return
-    msg = "تقرير الاخبار اليومي\n"
-    msg += f"{datetime.utcnow().strftime('%Y-%m-%d')}\n\n"
+    time_info = get_current_time()
+    vix = get_vix()
+    msg = f"تقرير الاخبار اليومي\n"
+    msg += f"التاريخ: {time_info['saudi']}\n\n"
+    if vix:
+        msg += f"مؤشر الخوف (VIX): {vix['emoji']} {vix['value']} - {vix['level']}\n\n"
     by_symbol = {}
     for item in news:
         symbol = item['symbol']
@@ -461,6 +516,7 @@ def analyze_stock(symbol, settings):
             conf = "ضعيفة"
         best_times = analyze_best_times(symbol)
         best_days = analyze_best_days(symbol)
+        risk_reward = round((target1 - current_price) / (current_price - stop_loss), 2) if stop_loss > 0 else 0
         return {
             'symbol': symbol,
             'price': current_price,
@@ -481,6 +537,7 @@ def analyze_stock(symbol, settings):
             'risk_amt': round(risk_amount, 2),
             'best_times': best_times,
             'best_days': best_days,
+            'risk_reward': risk_reward,
             'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M')
         }
     except Exception as e:
@@ -555,6 +612,7 @@ def handle_chat(text):
             msg += f"- وقف الخسارة: ${result['stop_loss']}\n"
             msg += f"- الهدف الاول: ${result['target1']}\n"
             msg += f"- الهدف الثاني: ${result['target2']}\n"
+            msg += f"- نسبة المخاطرة/العائد: {result['risk_reward']}:1\n"
             if result.get('best_times'):
                 msg += f"\nافضل اوقات الشراء:\n"
                 for h, v in result['best_times']:
@@ -591,6 +649,23 @@ def handle_chat(text):
             return msg
         else:
             return "لا توجد اخبار متاحة حالياً."
+    if any(word in text_lower for word in ['vix', 'مؤشر الخوف', 'الخوف']):
+        vix = get_vix()
+        if vix:
+            msg = f"مؤشر الخوف (VIX):\n\n"
+            msg += f"{vix['emoji']} القيمة: {vix['value']}\n"
+            msg += f"المستوى: {vix['level']}\n\n"
+            if vix['value'] < 15:
+                msg += "السوق هادئ - فرصة جيدة للشراء"
+            elif vix['value'] < 20:
+                msg += "السوق معتدل - تداول بحذر"
+            elif vix['value'] < 30:
+                msg += "السوق متوتر - كن حذراً"
+            else:
+                msg += "السوق خائف - تجنب المخاطرة"
+            return msg
+        else:
+            return "لم اتمكن من جلب مؤشر VIX حالياً."
     if any(word in text_lower for word in ['rsi', 'ما هو rsi', 'شرح rsi']):
         return "مؤشر RSI:\n\nRSI < 30: مباع بشكل زائد - فرصة شراء\nRSI > 70: مشتري بشكل زائد - قد ينخفض\nRSI 30-70: منطقة محايدة\n\nالبوت يستخدم RSI < 35 كاشارة شراء."
     elif any(word in text_lower for word in ['macd', 'ما هو macd']):
@@ -602,7 +677,7 @@ def handle_chat(text):
     elif any(word in text_lower for word in ['وقف الخسارة', 'stop loss', 'وقف']):
         return f"وقف الخسارة:\n\nيحمي راس مالك من خسائر اكبر.\n\nمن اعداداتك:\n- راس المال: ${settings['capital']}\n- المخاطرة: {settings['risk_percent']}% = ${settings['capital'] * settings['risk_percent'] / 100}\n\nالتزم بوقف الخسارة دائماً!"
     elif any(word in text_lower for word in ['كيف', 'help', 'مساعدة']):
-        return "كيف تستخدم البوت:\n\nاكتب رمز سهم: TSLA, AAPL, MSFT\nالاوامر: /settings, /status, /stock, /affordable, /news\nاسال عن: RSI, MACD, ADX, OBV, وقف الخسارة\nاسهم رخيصة او اخبار السوق"
+        return "كيف تستخدم البوت:\n\nاكتب رمز سهم: TSLA, AAPL, MSFT\nالاوامر: /settings, /status, /stock, /affordable, /news, /vix\nاسال عن: RSI, MACD, ADX, OBV, VIX, وقف الخسارة\nاسهم رخيصة او اخبار السوق"
     elif any(word in text_lower for word in ['افضل سهم', 'best stock', 'اشتر', 'شراء']):
         results = []
         for symbol in STOCKS:
@@ -617,18 +692,19 @@ def handle_chat(text):
                 msg += f"{stock_name} ({r['symbol']})\n"
                 msg += f"${r['price']} ({r['change']:+.2f}%)\n"
                 msg += f"{r['recommendation']} (نقاط: {r['score']})\n"
-                msg += f"SL: ${r['stop_loss']} | T1: ${r['target1']}\n\n"
+                msg += f"SL: ${r['stop_loss']} | T1: ${r['target1']}\n"
+                msg += f"نسبة المخاطرة/العائد: {r['risk_reward']}:1\n\n"
             return msg
         else:
             return "لا توجد فرص شراء قوية حالياً."
     elif any(word in text_lower for word in ['مرحبا', 'هلا', 'سلام', 'hi', 'hello']):
-        return "اهلاً!\n\nانا بوت تحليل الاسهم الذكي.\n\nيمكنني:\n- تحليل اي سهم\n- الاجابة عن المؤشرات\n- اقتراح افضل الفرص\n- البحث عن اسهم مناسبة لميزانيتك\n- ارسال اخبار السوق\n\nجرب: TSLA او اسهم رخيصة او اخبار"
+        return "اهلاً!\n\nانا بوت تحليل الاسهم الذكي.\n\nيمكنني:\n- تحليل اي سهم\n- الاجابة عن المؤشرات (RSI, MACD, ADX, OBV, VIX)\n- اقتراح افضل الفرص\n- البحث عن اسهم مناسبة لميزانيتك\n- ارسال اخبار السوق\n\nجرب: TSLA او اسهم رخيصة او اخبار او vix"
     elif any(word in text_lower for word in ['شكر', 'thanks', 'ممتاز']):
         return "العفو!\n\nهل تريد تحليل سهم او لديك سؤال اخر؟"
     elif any(word in text_lower for word in ['دقة', 'accuracy', 'اداء']):
         return f"اداء البوت:\n\nالدقة: {settings['accuracy_score']*100}%\nالصحيحة: {settings['correct_predictions']}\nالتوقعات: {settings['total_predictions']}\nRSI: {settings['rsi_threshold']}\n\nالبوت يتعلم ذاتياً كل ساعة!"
     else:
-        return "لم افهم تماماً.\n\nجرب:\n- رمز سهم: TSLA, AAPL\n- اسهم رخيصة\n- اخبار السوق\n- /help للاوامر"
+        return "لم افهم تماماً.\n\nجرب:\n- رمز سهم: TSLA, AAPL\n- اسهم رخيصة\n- اخبار السوق\n- vix (مؤشر الخوف)\n- /help للاوامر"
 
 def process_message(text, settings):
     if text == '/settings':
@@ -648,9 +724,27 @@ def process_message(text, settings):
         send_telegram(msg)
         print("تم ارسال /settings")
     elif text == '/help':
-        msg = "اوامر البوت:\n\nالاوامر:\n- /settings - اعدادات البوت\n- /status - حالة التعلم\n- /stock [رمز] - تحليل سهم\n- /affordable - اسهم مناسبة لميزانيتك\n- /news - اخبار السوق\n- /learn - مراجعة ذاتية\n\nالمحادثة:\n- اكتب رمز سهم: TSLA, AAPL\n- اسهم رخيصة\n- اخبار السوق\n- اسال عن: RSI, MACD, ADX, OBV"
+        msg = "اوامر البوت:\n\nالاوامر:\n- /settings - اعدادات البوت\n- /status - حالة التعلم\n- /stock [رمز] - تحليل سهم\n- /affordable - اسهم مناسبة لميزانيتك\n- /news - اخبار السوق\n- /vix - مؤشر الخوف\n- /learn - مراجعة ذاتية\n\nالمحادثة:\n- اكتب رمز سهم: TSLA, AAPL\n- اسهم رخيصة\n- اخبار السوق\n- vix (مؤشر الخوف)\n- اسال عن: RSI, MACD, ADX, OBV"
         send_telegram(msg)
         print("تم ارسال /help")
+    elif text == '/vix':
+        vix = get_vix()
+        if vix:
+            msg = f"مؤشر الخوف (VIX):\n\n"
+            msg += f"{vix['emoji']} القيمة: {vix['value']}\n"
+            msg += f"المستوى: {vix['level']}\n\n"
+            if vix['value'] < 15:
+                msg += "السوق هادئ - فرصة جيدة للشراء"
+            elif vix['value'] < 20:
+                msg += "السوق معتدل - تداول بحذر"
+            elif vix['value'] < 30:
+                msg += "السوق متوتر - كن حذراً"
+            else:
+                msg += "السوق خائف - تجنب المخاطرة"
+            send_telegram(msg)
+        else:
+            send_telegram("لم اتمكن من جلب مؤشر VIX حالياً.")
+        print("تم ارسال /vix")
     elif text == '/learn':
         learn_from_predictions()
         send_telegram("تمت المراجعة الذاتية!")
@@ -678,7 +772,8 @@ def process_message(text, settings):
             msg += f"- المخاطرة: ${result['risk_amt']}\n"
             msg += f"- SL: ${result['stop_loss']}\n"
             msg += f"- T1: ${result['target1']}\n"
-            msg += f"- T2: ${result['target2']}\n\n"
+            msg += f"- T2: ${result['target2']}\n"
+            msg += f"- نسبة المخاطرة/العائد: {result['risk_reward']}:1\n\n"
             if result.get('best_times'):
                 msg += f"افضل اوقات الشراء:\n"
                 for h, v in result['best_times']:
@@ -741,29 +836,31 @@ def handle_commands():
         
         settings = get_settings()
         
-        # الرد على آخر رسالة فقط (الأحدث)
-        last_message = results[-1]
-        update_id = last_message['update_id']
-        message = last_message.get('message', {})
-        text = message.get('text', '').strip()
-        chat_id = str(message.get('chat', {}).get('id', ''))
+        messages_to_process = results[-5:] if len(results) > 5 else results
         
-        print(f"الرد على آخر رسالة من {chat_id}: {text[:50]}")
-        
-        if chat_id != CHAT_ID:
-            print("Chat ID غير مطابق")
+        for message_data in messages_to_process:
+            update_id = message_data['update_id']
+            message = message_data.get('message', {})
+            text = message.get('text', '').strip()
+            chat_id = str(message.get('chat', {}).get('id', ''))
+            
+            print(f"معالجة رسالة من {chat_id}: {text[:50]}")
+            
+            if chat_id != CHAT_ID:
+                print("Chat ID غير مطابق")
+                save_last_update_id(update_id)
+                continue
+            
+            try:
+                process_message(text, settings)
+                time.sleep(2)
+            except Exception as e:
+                print(f"خطأ في معالجة الامر: {e}")
+                send_telegram(f"حدث خطأ: {e}")
+            
             save_last_update_id(update_id)
-            return
         
-        try:
-            process_message(text, settings)
-            time.sleep(1)
-        except Exception as e:
-            print(f"خطأ في معالجة الامر: {e}")
-            send_telegram(f"حدث خطأ: {e}")
-        
-        save_last_update_id(update_id)
-        print(f"تم حفظ آخر update_id: {update_id}")
+        print(f"تم معالجة {len(messages_to_process)} رسالة")
     
     except Exception as e:
         print(f"خطأ في handle_commands: {e}")
@@ -772,8 +869,10 @@ def run_scan():
     print("بدء فحص السوق...")
     settings = get_settings()
     learning_data = load_json(LEARNING_FILE, {'predictions': []})
-    now = datetime.utcnow()
-    today = now.strftime('%Y-%m-%d')
+    time_info = get_current_time()
+    vix = get_vix()
+    market_overview = get_market_overview()
+    today = time_info['date']
     results = []
     strong_alerts = []
     for symbol in settings.get('stocks', STOCKS):
@@ -792,8 +891,8 @@ def run_scan():
                     'adx': result.get('adx', 0),
                     'macd': result.get('macd', 0),
                     'date': today,
-                    'time': now.strftime('%H:%M'),
-                    'timestamp': now.strftime('%Y-%m-%d %H')
+                    'time': time_info['saudi_short'],
+                    'timestamp': now.strftime('%Y-%m-%d %H') if 'now' in dir() else datetime.utcnow().strftime('%Y-%m-%d %H')
                 })
                 if result['score'] >= 5:
                     strong_alerts.append(result)
@@ -802,8 +901,14 @@ def run_scan():
     save_json(LEARNING_FILE, learning_data)
     if results:
         results.sort(key=lambda x: x['score'], reverse=True)
-        msg = f"فحص السوق (كل 5 دقائق)\n{now.strftime('%H:%M')} UTC\n"
+        msg = f"فحص السوق (كل 5 دقائق)\n"
+        msg += f"التاريخ: {time_info['saudi']}\n"
         msg += f"الدقة: {settings['accuracy_score']*100}% | RSI: {settings['rsi_threshold']}\n\n"
+        if vix:
+            msg += f"مؤشر الخوف (VIX): {vix['emoji']} {vix['value']} - {vix['level']}\n"
+        if market_overview:
+            msg += f"S&P 500: ${market_overview['price']} ({market_overview['change']:+.2f}%)\n"
+        msg += "\n"
         msg += f"افضل 3 فرص:\n\n"
         for r in results[:3]:
             stock_name = STOCK_NAMES.get(r['symbol'], r['symbol'])
@@ -811,7 +916,8 @@ def run_scan():
             msg += f"السعر: ${r['price']} | RSI: {r['rsi']} | ADX: {r['adx']}\n"
             msg += f"{r['recommendation']} (نقاط: {r['score']})\n"
             msg += f"{', '.join(r['reasons'])}\n"
-            msg += f"SL: ${r['stop_loss']} | T1: ${r['target1']} | T2: ${r['target2']}\n\n"
+            msg += f"SL: ${r['stop_loss']} | T1: ${r['target1']} | T2: ${r['target2']}\n"
+            msg += f"نسبة المخاطرة/العائد: {r['risk_reward']}:1\n\n"
             msg += explain_recommendation(r)
             msg += "\n\n"
             if r.get('best_times'):
@@ -826,7 +932,8 @@ def run_scan():
                 msg += f"{stock_name} ({r['symbol']}) - {r['recommendation']}\n"
                 msg += f"${r['price']} | RSI: {r['rsi']}\n"
                 msg += f"النقاط: {r['score']}/8\n"
-                msg += f"SL: ${r['stop_loss']} | T1: ${r['target1']} | T2: ${r['target2']}\n\n"
+                msg += f"SL: ${r['stop_loss']} | T1: ${r['target1']} | T2: ${r['target2']}\n"
+                msg += f"نسبة المخاطرة/العائد: {r['risk_reward']}:1\n\n"
                 msg += explain_recommendation(r) + "\n\n"
                 if r.get('best_times'):
                     msg += f"اشتري الساعة: {r['best_times'][0][0]}:00\n"
