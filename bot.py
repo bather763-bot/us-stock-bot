@@ -4,6 +4,7 @@ import numpy as np
 import requests
 import os
 import json
+import time
 import warnings
 from datetime import datetime, timedelta
 warnings.filterwarnings('ignore')
@@ -738,31 +739,30 @@ def handle_commands():
             return
         
         settings = get_settings()
-        max_update_id = last_update_id
         
-        for update in results:
-            update_id = update['update_id']
-            if update_id > max_update_id:
-                max_update_id = update_id
-            
-            message = update.get('message', {})
-            text = message.get('text', '').strip()
-            chat_id = str(message.get('chat', {}).get('id', ''))
-            
-            print(f"رسالة من {chat_id}: {text[:50]}")
-            
-            if chat_id != CHAT_ID:
-                print("Chat ID غير مطابق")
-                continue
-            
-            try:
-                process_message(text, settings)
-            except Exception as e:
-                print(f"خطأ في معالجة الامر: {e}")
-                send_telegram(f"حدث خطأ: {e}")
+        # الرد على آخر رسالة فقط (الأحدث)
+        last_message = results[-1]
+        update_id = last_message['update_id']
+        message = last_message.get('message', {})
+        text = message.get('text', '').strip()
+        chat_id = str(message.get('chat', {}).get('id', ''))
         
-        save_last_update_id(max_update_id)
-        print(f"تم حفظ آخر update_id: {max_update_id}")
+        print(f"الرد على آخر رسالة من {chat_id}: {text[:50]}")
+        
+        if chat_id != CHAT_ID:
+            print("Chat ID غير مطابق")
+            save_last_update_id(update_id)
+            return
+        
+        try:
+            process_message(text, settings)
+            time.sleep(1)
+        except Exception as e:
+            print(f"خطأ في معالجة الامر: {e}")
+            send_telegram(f"حدث خطأ: {e}")
+        
+        save_last_update_id(update_id)
+        print(f"تم حفظ آخر update_id: {update_id}")
     
     except Exception as e:
         print(f"خطأ في handle_commands: {e}")
