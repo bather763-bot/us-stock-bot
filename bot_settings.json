@@ -1,0 +1,16 @@
+{
+  "capital": 10000,
+  "risk_percent": 2.0,
+  "rsi_threshold": 35,
+  "accuracy_score": 0.0,
+  "total_predictions": 10,
+  "correct_predictions": 0,
+  "last_adjustment": null,
+  "last_fast_learning": "2026-10-02T17:44:41.738296",
+  "mistake_patterns": {
+    "high_rsi": 7,
+    "low_volume": 7,
+    "weak_trend": 0,
+    "wrong_macd": 0
+  }
+}
