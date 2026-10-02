@@ -1,4 +1,3 @@
-
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -64,7 +63,9 @@ def send_telegram(msg, parse_mode="HTML"):
         return False
 
 def get_last_update_id():
-    return 0
+    # تم التصحيح: قراءة المعرف الفعلي من الملف بدلاً من إرجاع 0 دائماً
+    data = load_json(UPDATE_FILE, {'last_update_id': 0})
+    return data.get('last_update_id', 0)
 
 def save_last_update_id(update_id):
     save_json(UPDATE_FILE, {'last_update_id': update_id})
@@ -827,14 +828,12 @@ def handle_commands():
         print(f"📨 عدد الرسائل الجديدة: {len(results)}")
         
         if len(results) == 0:
-            print("📭 لا توجد رسائل جديدة")
-            return
+            return # لا توجد رسائل، نخرج بهدوء ليعود للحلقة الرئيسية
         
         settings = get_settings()
         
-        messages_to_process = results[-5:] if len(results) > 5 else results
-        
-        for message_data in messages_to_process:
+        # تم التعديل: معالجة جميع الرسائل الجديدة بدلاً من آخر 5 فقط لضمان عدم فقدان أي رسالة
+        for message_data in results:
             update_id = message_data['update_id']
             message = message_data.get('message', {})
             text = message.get('text', '').strip()
@@ -849,14 +848,14 @@ def handle_commands():
             
             try:
                 process_message(text, settings)
-                time.sleep(2)
+                time.sleep(1) # تقليل وقت الانتظار بين الرسائل ليكون الرد أسرع
             except Exception as e:
                 print(f"❌ خطأ في معالجة الأمر: {e}")
                 send_telegram(f"❌ حدث خطأ: {e}")
             
             save_last_update_id(update_id)
         
-        print(f"✅ تم معالجة {len(messages_to_process)} رسالة")
+        print(f"✅ تم معالجة {len(results)} رسالة")
     
     except Exception as e:
         print(f"❌ خطأ في handle_commands: {e}")
@@ -942,19 +941,47 @@ def run_scan():
         print("لا توجد بيانات.")
     print("✅ انتهى الفحص")
 
+# ==========================================
+# التعديل الجوهري هنا: حلقة التشغيل المستمرة
+# ==========================================
 if __name__ == '__main__':
-    print(" بدء البوت الذكي المتعلم...")
-    print("1️⃣ معالجة الأوامر...")
-    handle_commands()
-    now = datetime.utcnow()
+    print("🚀 بدء تشغيل البوت الذكي المتعلم بشكل مستمر...")
+    print("اضغط Ctrl+C لإيقاف البوت")
+
+    # مهام التهيئة الأولية (تعمل مرة واحدة عند البدء)
     print("2️⃣ التعلم السريع...")
     fast_learning()
+
+    now = datetime.utcnow()
     if now.hour == 10:
-        print("3️ المراجعة الذاتية اليومية...")
+        print("3️⃣ المراجعة الذاتية اليومية...")
         learn_from_predictions()
     if now.hour == 9 and now.minute < 10:
         print("4️⃣ تقرير الأخبار اليومي...")
         send_daily_news_report()
-    print("5️ فحص السوق...")
-    run_scan()
-    print("✅ انتهى البوت")
+
+    print("5️⃣ بدء حلقة الاستماع للأوامر وفحص السوق...")
+    
+    last_scan_time = 0 # متغير لتتبع وقت آخر فحص للسوق
+
+    while True:
+        try:
+            # 1. الاستماع للرسائل والرد عليها فوراً
+            handle_commands()
+
+            # 2. فحص السوق بشكل دوري (كل 5 دقائق = 300 ثانية)
+            current_time = time.time()
+            if current_time - last_scan_time >= 300:
+                print("🎯 بدء فحص السوق الدوري...")
+                run_scan()
+                last_scan_time = current_time
+
+            # 3. انتظار قصير لتجنب الضغط على واجهة برمجة تطبيقات تليجرام (API Rate Limits)
+            time.sleep(3)
+
+        except KeyboardInterrupt:
+            print("\n🛑 تم إيقاف البوت بواسطة المستخدم.")
+            break
+        except Exception as e:
+            print(f"❌ خطأ غير متوقع في الحلقة الرئيسية: {e}")
+            time.sleep(5) # انتظار قبل إعادة المحاولة في حال حدوث خطأ
