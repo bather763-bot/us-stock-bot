@@ -63,7 +63,8 @@ def send_telegram(msg, parse_mode="HTML"):
         return False
 
 def get_last_update_id():
-    return 0
+    data = load_json(UPDATE_FILE, {'last_update_id': 0})
+    return data.get('last_update_id', 0)
 
 def save_last_update_id(update_id):
     save_json(UPDATE_FILE, {'last_update_id': update_id})
@@ -97,7 +98,7 @@ def get_vix():
                 emoji = "🟠"
             else:
                 level = "مرتفع جداً (سوق خائف)"
-                emoji = "🔴"
+                emoji = ""
             return {'value': round(current, 2), 'level': level, 'emoji': emoji}
     except:
         pass
@@ -239,7 +240,7 @@ def send_daily_news_report():
         by_symbol[symbol].append(item)
     for symbol, items in by_symbol.items():
         stock_name = STOCK_NAMES.get(symbol, symbol)
-        msg += f" <b>{stock_name} ({symbol}):</b>\n"
+        msg += f"📌 <b>{stock_name} ({symbol}):</b>\n"
         for item in items[:2]:
             msg += f"• {item['title']}\n"
             msg += f"  📰 {item['publisher']} | ⏰ {item['time']}\n\n"
@@ -319,9 +320,9 @@ def detect_patterns(data):
         prev_close = data['Close'].iloc[-2]
         prev_open = data['Open'].iloc[-2]
         if lower_shadow > body * 2 and upper_shadow < body * 0.5 and close_p > open_p:
-            patterns.append("🔨 مطرقة (صعود)")
+            patterns.append(" مطرقة (صعود)")
         if close_p > open_p and prev_close < prev_open and close_p > prev_open and open_p < prev_close:
-            patterns.append(" ابتلاعية صعودية")
+            patterns.append("📈 ابتلاعية صعودية")
         if body < (high_p - low_p) * 0.1:
             patterns.append("⚖️ دوجي (تردد)")
     except:
@@ -338,7 +339,7 @@ def explain_recommendation(result):
         explanations.append("✅ <b>لماذا شراء قوي؟</b>")
         explanations.append(f"حصل على {score}/8 نقاط - معظم المؤشرات إيجابية.")
     elif score >= 4:
-        explanations.append(" <b>لماذا شراء؟</b>")
+        explanations.append("🟡 <b>لماذا شراء؟</b>")
         explanations.append(f"حصل على {score}/8 نقاط - مؤشرات مختلطة لكن إيجابية.")
     elif score >= 3:
         explanations.append("👀 <b>لماذا مراقبة فقط؟</b>")
@@ -381,7 +382,7 @@ def learn_from_predictions():
     yesterday_preds = [p for p in learning_data['predictions'] if p.get('date') == yesterday]
     if not yesterday_preds:
         return
-    print(f"🧠 مراجعة {len(yesterday_preds)} توقع...")
+    print(f" مراجعة {len(yesterday_preds)} توقع...")
     correct, wrong = 0, 0
     for pred in yesterday_preds:
         try:
@@ -417,7 +418,7 @@ def learn_from_predictions():
             send_telegram(f"🧠 <b>تحسين ذاتي!</b>\n\n🎯 الدقة: {settings['accuracy_score']*100}%\n⚙️ RSI: {current_rsi} → {settings['rsi_threshold']}\n\n🤖 البوت أصبح أكثر انتقائية!")
         elif settings['accuracy_score'] > 0.70 and current_rsi < 45:
             settings['rsi_threshold'] = min(45, current_rsi + 2)
-            send_telegram(f"📈 <b>تحسين ذاتي!</b>\n\n🎯 الدقة: {settings['accuracy_score']*100}%\n️ RSI: {current_rsi} → {settings['rsi_threshold']}\n\n البوت سيصطاد فرص أكثر!")
+            send_telegram(f" <b>تحسين ذاتي!</b>\n\n🎯 الدقة: {settings['accuracy_score']*100}%\n⚙️ RSI: {current_rsi} → {settings['rsi_threshold']}\n\n🤖 البوت سيصطاد فرص أكثر!")
         settings['last_adjustment'] = yesterday
         save_json(SETTINGS_FILE, settings)
         week_ago = (datetime.utcnow() - timedelta(days=7)).strftime('%Y-%m-%d')
@@ -476,7 +477,7 @@ def analyze_stock(symbol, settings):
             reasons.append(f"📉 RSI منخفض ({rsi:.1f})")
         if current_price > sma:
             score += 1
-            reasons.append(" السعر فوق المتوسط")
+            reasons.append("📈 السعر فوق المتوسط")
         else:
             reasons.append("📉 السعر تحت المتوسط")
         if macd > 0:
@@ -501,7 +502,7 @@ def analyze_stock(symbol, settings):
             rec = "✅ شراء قوي"
             conf = "عالية"
         elif score >= 4:
-            rec = " شراء"
+            rec = "🟡 شراء"
             conf = "متوسطة"
         elif score >= 3:
             rec = "👀 مراقبة"
@@ -543,7 +544,7 @@ def find_affordable_stocks(settings, max_results=10):
     capital = settings['capital']
     risk_percent = settings['risk_percent'] / 100.0
     risk_amount = capital * risk_percent
-    print(f"🔍 البحث عن أسهم مناسبة لميزانية ${capital}...")
+    print(f" البحث عن أسهم مناسبة لميزانية ${capital}...")
     affordable_stocks = []
     stocks_to_check = ALL_US_STOCKS[:30]
     for symbol in stocks_to_check:
@@ -606,10 +607,10 @@ def handle_chat(text):
             msg += f"• المخاطرة: ${result['risk_amt']}\n"
             msg += f"🛡️ وقف الخسارة: ${result['stop_loss']}\n"
             msg += f"🎯 الهدف الأول: ${result['target1']}\n"
-            msg += f" الهدف الثاني: ${result['target2']}\n"
-            msg += f"⚖️ نسبة المخاطرة/العائد: {result['risk_reward']}:1\n"
+            msg += f"🎯 الهدف الثاني: ${result['target2']}\n"
+            msg += f"️ نسبة المخاطرة/العائد: {result['risk_reward']}:1\n"
             if result.get('best_times'):
-                msg += f"\n <b>أفضل أوقات الشراء:</b>\n"
+                msg += f"\n⏰ <b>أفضل أوقات الشراء:</b>\n"
                 for h, v in result['best_times']:
                     msg += f"• الساعة {h}:00 (عائد متوقع: +{v}%)\n"
             if result.get('best_days'):
@@ -626,8 +627,8 @@ def handle_chat(text):
             for stock in affordable:
                 msg += f"📌 <b>{stock['name']} ({stock['symbol']})</b>\n"
                 msg += f"💰 السعر: ${stock['price']} ({stock['change']:+.2f}%)\n"
-                msg += f" RSI: {stock['rsi']}\n"
-                msg += f"🔢 يمكنك شراء: {stock['position_size']} سهم\n"
+                msg += f"📊 RSI: {stock['rsi']}\n"
+                msg += f" يمكنك شراء: {stock['position_size']} سهم\n"
                 msg += f"💵 التكلفة: ${stock['total_investment']}\n\n"
             msg += f"💡 <b>نصيحة:</b> استخدم /stock [رمز] لتحليل مفصل!"
             return msg
@@ -636,28 +637,28 @@ def handle_chat(text):
     if any(word in text_lower for word in ['اخبار', 'news', 'تقرير يومي']):
         news = get_daily_news()
         if news:
-            msg = "📰 <b>آخر أخبار السوق:</b>\n\n"
+            msg = " <b>آخر أخبار السوق:</b>\n\n"
             for item in news[:5]:
                 stock_name = STOCK_NAMES.get(item['symbol'], item['symbol'])
                 msg += f"📌 <b>{stock_name} ({item['symbol']}):</b> {item['title']}\n"
-                msg += f"📰 {item['publisher']} |  {item['time']}\n\n"
+                msg += f"📰 {item['publisher']} | ⏰ {item['time']}\n\n"
             return msg
         else:
-            return " لا توجد أخبار متاحة حالياً."
+            return "📰 لا توجد أخبار متاحة حالياً."
     if any(word in text_lower for word in ['vix', 'مؤشر الخوف', 'الخوف']):
         vix = get_vix()
         if vix:
-            msg = f" <b>مؤشر الخوف (VIX):</b>\n\n"
+            msg = f"😱 <b>مؤشر الخوف (VIX):</b>\n\n"
             msg += f"{vix['emoji']} <b>القيمة:</b> {vix['value']}\n"
             msg += f"📊 <b>المستوى:</b> {vix['level']}\n\n"
             if vix['value'] < 15:
-                msg += " السوق هادئ - فرصة جيدة للشراء"
+                msg += "🟢 السوق هادئ - فرصة جيدة للشراء"
             elif vix['value'] < 20:
                 msg += "🟡 السوق معتدل - تداول بحذر"
             elif vix['value'] < 30:
-                msg += "🟠 السوق متوتر - كن حذراً"
+                msg += " السوق متوتر - كن حذراً"
             else:
-                msg += " السوق خائف - تجنب المخاطرة"
+                msg += "🔴 السوق خائف - تجنب المخاطرة"
             return msg
         else:
             return "❌ لم أتمكن من جلب مؤشر VIX حالياً."
@@ -666,7 +667,7 @@ def handle_chat(text):
     elif any(word in text_lower for word in ['macd', 'ما هو macd']):
         return "📈 <b>مؤشر MACD:</b>\n\n✅ <b>MACD > 0:</b> زخم صعودي\n❌ <b>MACD < 0:</b> زخم هبوطي"
     elif any(word in text_lower for word in ['adx', 'ما هو adx']):
-        return "💪 <b>مؤشر ADX:</b>\n\n💪 <b>ADX > 25:</b> اتجاه قوي\n⚖️ <b>ADX < 25:</b> اتجاه ضعيف"
+        return "💪 <b>مؤشر ADX:</b>\n\n💪 <b>ADX > 25:</b> اتجاه قوي\n️ <b>ADX < 25:</b> اتجاه ضعيف"
     elif any(word in text_lower for word in ['obv', 'تراكم']):
         return "🏦 <b>مؤشر OBV:</b>\n\n🏦 <b>OBV مرتفع:</b> تراكم مؤسساتي\n📉 <b>OBV منخفض:</b> توزيع"
     elif any(word in text_lower for word in ['وقف الخسارة', 'stop loss', 'وقف']):
@@ -693,19 +694,19 @@ def handle_chat(text):
         else:
             return "📊 لا توجد فرص شراء قوية حالياً."
     elif any(word in text_lower for word in ['مرحبا', 'هلا', 'سلام', 'hi', 'hello']):
-        return "👋 أهلاً!\n\n🤖 أنا بوت تحليل الأسهم الذكي.\n\nيمكنني:\n• تحليل أي سهم\n• الإجابة عن المؤشرات (RSI, MACD, ADX, OBV, VIX)\n• اقتراح أفضل الفرص\n• البحث عن أسهم مناسبة لميزانيتك\n• إرسال أخبار السوق\n\n💡 جرب: TSLA أو أسهم رخيصة أو أخبار أو vix"
+        return "👋 أهلاً!\n\n أنا بوت تحليل الأسهم الذكي.\n\nيمكنني:\n• تحليل أي سهم\n• الإجابة عن المؤشرات (RSI, MACD, ADX, OBV, VIX)\n• اقتراح أفضل الفرص\n• البحث عن أسهم مناسبة لميزانيتك\n• إرسال أخبار السوق\n\n💡 جرب: TSLA أو أسهم رخيصة أو أخبار أو vix"
     elif any(word in text_lower for word in ['شكر', 'thanks', 'ممتاز']):
         return "😊 العفو!\n\nهل تريد تحليل سهم أو لديك سؤال آخر؟"
     elif any(word in text_lower for word in ['دقة', 'accuracy', 'اداء']):
-        return f"🎯 <b>أداء البوت:</b>\n\n🎯 الدقة: {settings['accuracy_score']*100}%\n✅ الصحيحة: {settings['correct_predictions']}\n📝 التوقعات: {settings['total_predictions']}\n⚙️ RSI: {settings['rsi_threshold']}\n\n💡 البوت يتعلم ذاتياً كل ساعة!"
+        return f"🎯 <b>أداء البوت:</b>\n\n🎯 الدقة: {settings['accuracy_score']*100}%\n✅ الصحيحة: {settings['correct_predictions']}\n📝 التوقعات: {settings['total_predictions']}\n️ RSI: {settings['rsi_threshold']}\n\n💡 البوت يتعلم ذاتياً كل ساعة!"
     else:
-        return "🤔 لم أفهم تماماً.\n\nجرب:\n• رمز سهم: TSLA, AAPL\n• أسهم رخيصة\n• أخبار السوق\n• vix (مؤشر الخوف)\n• /help للأوامر"
+        return " لم أفهم تماماً.\n\nجرب:\n• رمز سهم: TSLA, AAPL\n• أسهم رخيصة\n• أخبار السوق\n• vix (مؤشر الخوف)\n• /help للأوامر"
 
 def process_message(text, settings):
     if text == '/settings':
         msg = f"⚙️ <b>إعدادات البوت الذكية:</b>\n"
         msg += f"💰 رأس المال: ${settings['capital']}\n"
-        msg += f"⚠️ المخاطرة: {settings['risk_percent']}%\n"
+        msg += f"️ المخاطرة: {settings['risk_percent']}%\n"
         msg += f"🧠 معيار RSI: {settings['rsi_threshold']} (يتعدل تلقائياً)\n"
         msg += f"🎯 الدقة: {settings['accuracy_score']*100}%\n"
         msg += f"📊 التوقعات: {settings['total_predictions']}\n"
@@ -733,7 +734,7 @@ def process_message(text, settings):
             elif vix['value'] < 20:
                 msg += "🟡 السوق معتدل - تداول بحذر"
             elif vix['value'] < 30:
-                msg += "🟠 السوق متوتر - كن حذراً"
+                msg += " السوق متوتر - كن حذراً"
             else:
                 msg += "🔴 السوق خائف - تجنب المخاطرة"
             send_telegram(msg)
@@ -745,7 +746,7 @@ def process_message(text, settings):
         send_telegram("✅ تمت المراجعة الذاتية!")
         print("✅ تم إرسال /learn")
     elif text == '/news':
-        send_telegram(" جاري جلب الأخبار...")
+        send_telegram("⏳ جاري جلب الأخبار...")
         send_daily_news_report()
         print("✅ تم إرسال /news")
     elif text.startswith('/stock '):
@@ -753,28 +754,28 @@ def process_message(text, settings):
         result = analyze_stock(symbol, settings)
         if result:
             stock_name = STOCK_NAMES.get(result['symbol'], result['symbol'])
-            msg = f" <b>تحليل {stock_name} ({result['symbol']}):</b>\n"
+            msg = f"📊 <b>تحليل {stock_name} ({result['symbol']}):</b>\n"
             msg += f"💰 السعر: ${result['price']} ({result['change']:+.2f}%)\n"
             msg += f"📈 RSI: {result['rsi']} | MACD: {result['macd']} | ADX: {result['adx']}\n"
-            msg += f" {result['recommendation']} ({result['confidence']})\n"
+            msg += f"🎯 {result['recommendation']} ({result['confidence']})\n"
             msg += f"⭐ النقاط: {result['score']}/8\n\n"
             msg += explain_recommendation(result)
             msg += "\n\n"
-            msg += f" الأسباب:\n" + "\n".join(['• ' + r for r in result['reasons']]) + f"\n\n"
+            msg += f"📝 الأسباب:\n" + "\n".join(['• ' + r for r in result['reasons']]) + f"\n\n"
             msg += f"<b>💰 خطة التداول:</b>\n"
             msg += f"• العدد: {result['pos_size']} سهم\n"
             msg += f"• الاستثمار: ${result['total_inv']}\n"
             msg += f"• المخاطرة: ${result['risk_amt']}\n"
             msg += f"🛡️ SL: ${result['stop_loss']}\n"
             msg += f"🎯 T1: ${result['target1']}\n"
-            msg += f" T2: ${result['target2']}\n"
-            msg += f"⚖️ نسبة المخاطرة/العائد: {result['risk_reward']}:1\n\n"
+            msg += f"🎯 T2: ${result['target2']}\n"
+            msg += f"️ نسبة المخاطرة/العائد: {result['risk_reward']}:1\n\n"
             if result.get('best_times'):
                 msg += f"⏰ <b>أفضل أوقات الشراء:</b>\n"
                 for h, v in result['best_times']:
                     msg += f"• الساعة {h}:00 (عائد: +{v}%)\n"
             if result.get('best_days'):
-                msg += f"\n📅 <b>أفضل أيام التداول:</b>\n"
+                msg += f"\n <b>أفضل أيام التداول:</b>\n"
                 for d, v in result['best_days']:
                     msg += f"• {d} (+{v}%)\n"
             send_telegram(msg)
@@ -782,15 +783,15 @@ def process_message(text, settings):
         else:
             send_telegram(f"❌ لا بيانات لـ {symbol}")
     elif text == '/affordable':
-        send_telegram(" جاري البحث عن أسهم مناسبة...")
+        send_telegram("⏳ جاري البحث عن أسهم مناسبة...")
         affordable = find_affordable_stocks(settings, max_results=8)
         if affordable:
             msg = f"💰 <b>أسهم مناسبة لميزانيتك (${settings['capital']}):</b>\n\nيمكنك شراء 10 أسهم على الأقل:\n\n"
             for stock in affordable:
                 msg += f"📌 <b>{stock['name']} ({stock['symbol']})</b>\n"
                 msg += f"💰 السعر: ${stock['price']} ({stock['change']:+.2f}%)\n"
-                msg += f" RSI: {stock['rsi']}\n"
-                msg += f"🔢 يمكنك شراء: {stock['position_size']} سهم\n"
+                msg += f"📊 RSI: {stock['rsi']}\n"
+                msg += f" يمكنك شراء: {stock['position_size']} سهم\n"
                 msg += f"💵 التكلفة: ${stock['total_investment']}\n\n"
             msg += f"💡 استخدم /stock [رمز] لتحليل مفصل!"
             send_telegram(msg)
@@ -809,13 +810,13 @@ def process_message(text, settings):
             print(f"✅ تم الرد على: {text[:30]}")
 
 def handle_commands():
-    print(" بدء معالجة الأوامر...")
+    print("💬 بدء معالجة الأوامر...")
     url_base = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
     last_update_id = get_last_update_id()
     
     try:
         url = f"{url_base}/getUpdates?offset={last_update_id + 1}&limit=100&timeout=5"
-        print(f"📡 الاتصال بـ Telegram (من update {last_update_id})...")
+        print(f" الاتصال بـ Telegram (من update {last_update_id})...")
         response = requests.get(url, timeout=10).json()
         
         if not response.get('ok'):
@@ -826,39 +827,37 @@ def handle_commands():
         print(f"📨 عدد الرسائل الجديدة: {len(results)}")
         
         if len(results) == 0:
-            print("📭 لا توجد رسائل جديدة")
+            print(" لا توجد رسائل جديدة")
             return
         
         settings = get_settings()
         
-        messages_to_process = results[-5:] if len(results) > 5 else results
+        # معالجة آخر رسالة فقط (الأحدث)
+        last_message = results[-1]
+        update_id = last_message['update_id']
+        message = last_message.get('message', {})
+        text = message.get('text', '').strip()
+        chat_id = str(message.get('chat', {}).get('id', ''))
         
-        for message_data in messages_to_process:
-            update_id = message_data['update_id']
-            message = message_data.get('message', {})
-            text = message.get('text', '').strip()
-            chat_id = str(message.get('chat', {}).get('id', ''))
-            
-            print(f"💬 معالجة رسالة من {chat_id}: {text[:50]}")
-            
-            if chat_id != CHAT_ID:
-                print("⚠️ Chat ID غير مطابق")
-                save_last_update_id(update_id)
-                continue
-            
-            try:
-                process_message(text, settings)
-                time.sleep(2)
-            except Exception as e:
-                print(f"❌ خطأ في معالجة الأمر: {e}")
-                send_telegram(f"❌ حدث خطأ: {e}")
-            
+        print(f"💬 الرد على آخر رسالة من {chat_id}: {text[:50]}")
+        
+        if chat_id != CHAT_ID:
+            print("⚠️ Chat ID غير مطابق")
             save_last_update_id(update_id)
+            return
         
-        print(f"✅ تم معالجة {len(messages_to_process)} رسالة")
+        try:
+            process_message(text, settings)
+        except Exception as e:
+            print(f"❌ خطأ في معالجة الأمر: {e}")
+            send_telegram(f"❌ حدث خطأ: {e}")
+        
+        # حفظ آخر update_id لمنع التكرار
+        save_last_update_id(update_id)
+        print(f"✅ تم الرد وحفظ update_id: {update_id}")
     
     except Exception as e:
-        print(f"❌ خطأ في handle_commands: {e}")
+        print(f" خطأ في handle_commands: {e}")
 
 def run_scan():
     print("🎯 بدء فحص السوق...")
@@ -897,8 +896,8 @@ def run_scan():
     if results:
         results.sort(key=lambda x: x['score'], reverse=True)
         msg = f" <b>فحص السوق (كل 5 دقائق)</b>\n"
-        msg += f" التاريخ: {time_info['saudi']}\n"
-        msg += f"🧠 الدقة: {settings['accuracy_score']*100}% | RSI: {settings['rsi_threshold']}\n\n"
+        msg += f"📅 التاريخ: {time_info['saudi']}\n"
+        msg += f" الدقة: {settings['accuracy_score']*100}% | RSI: {settings['rsi_threshold']}\n\n"
         if vix:
             msg += f"😱 مؤشر الخوف (VIX): {vix['emoji']} {vix['value']} - {vix['level']}\n"
         if market_overview:
@@ -927,14 +926,14 @@ def run_scan():
                 msg += f"🔥 <b>{stock_name} ({r['symbol']})</b> - {r['recommendation']}\n"
                 msg += f"💰 ${r['price']} | RSI: {r['rsi']}\n"
                 msg += f"⭐ النقاط: {r['score']}/8\n"
-                msg += f"🛡️ SL: ${r['stop_loss']} | T1: ${r['target1']} | T2: ${r['target2']}\n"
+                msg += f"️ SL: ${r['stop_loss']} | T1: ${r['target1']} | T2: ${r['target2']}\n"
                 msg += f"⚖️ نسبة المخاطرة/العائد: {r['risk_reward']}:1\n\n"
                 msg += explain_recommendation(r) + "\n\n"
                 if r.get('best_times'):
                     msg += f"⏰ اشترِ الساعة: {r['best_times'][0][0]}:00\n"
                 if r.get('best_days'):
-                    msg += f"📅 أفضل يوم: {r['best_days'][0][0]}\n"
-                msg += f"💰 العدد: {r['pos_size']} سهم (${r['total_inv']})\n\n"
+                    msg += f" أفضل يوم: {r['best_days'][0][0]}\n"
+                msg += f" العدد: {r['pos_size']} سهم (${r['total_inv']})\n\n"
         send_telegram(msg)
         print(f"✅ تم إرسال التقرير ({len(strong_alerts)} فرصة قوية)")
     else:
