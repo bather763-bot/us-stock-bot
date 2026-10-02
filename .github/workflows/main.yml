@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -30,8 +32,7 @@ jobs:
 
       - name: Save all data files
         run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'bot@github.com'
           git add -A
-          git commit -m "Save bot data [skip ci]" || echo "No changes"
-          git push || echo "Push failed"
+          git diff --staged --quiet || (git commit -m "🤖 Save bot data [skip ci]" && git push)
