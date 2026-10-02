@@ -1,4 +1,3 @@
-
 name: US Stock Market Scanner
 
 on:
@@ -29,10 +28,10 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python bot.py
 
-      - name: Commit and push learning data
+      - name: Save all data files
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
-          git add learning_data.json bot_settings.json 2>/dev/null || true
-          git commit -m "Save learning data [skip ci]" || true
-          git push || true
+          git add -A
+          git commit -m "Save bot data [skip ci]" || echo "No changes"
+          git push || echo "Push failed"
