@@ -2,7 +2,8 @@ name: US Stock Market Scanner
 
 on:
   schedule:
-    - cron: '*/5 14-21 * * 1-5'
+    # التشغيل كل دقيقة واحدة من 2:00 PM إلى 9:00 PM UTC (5 مساءً إلى 12 منتصف الليل بتوقيت السعودية)
+    - cron: '*/1 14-21 * * 1-5'
   workflow_dispatch:
 
 permissions:
