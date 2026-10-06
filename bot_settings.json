@@ -1,5 +1,5 @@
 {
-  "capital": 10000,
+  "capital": 200.0,
   "risk_percent": 2.0,
   "rsi_threshold": 35,
   "accuracy_score": 0.02,
