@@ -104,7 +104,6 @@ def get_market_status():
     now = datetime.now(timezone.utc)
     day = now.weekday()
     hour = now.hour
-    # السوق الأمريكي: الاثنين(0) إلى الجمعة(4)، من 14:30 إلى 21:00 UTC
     if day >= 5: return "🔴 السوق مغلق (عطلة نهاية الأسبوع)"
     if 14 <= hour < 21: return "🟢 السوق مفتوح الآن (تداول مباشر)"
     if hour < 14: return "🟡 السوق لم يفتح بعد (يفتح 5:00 مساءً بتوقيت السعودية)"
@@ -652,19 +651,26 @@ def run_scan():
     else: print("لا توجد بيانات")
     print("✅ انتهى الفحص")
 
+# ✅ التعديل الوحيد في هذا الملف: دعم وضع التشغيل المنفصل
 if __name__ == '__main__':
-    print("🚀 بدء البوت...")
-    print("1️⃣ الأوامر...")
-    handle_commands()
-    now = datetime.utcnow()
-    print("2️⃣ التعلم...")
-    fast_learning()
-    if now.hour == 10:
-        print("3️⃣ مراجعة يومية...")
-        learn_from_predictions()
-    if now.hour == 9 and now.minute < 10:
-        print("4️⃣ أخبار...")
-        send_daily_news_report()
-    print("5️⃣ فحص...")
-    run_scan()
+    run_mode = os.environ.get('RUN_MODE', 'all')
+    
+    if run_mode in ['all', 'commands']:
+        print("🚀 بدء البوت...")
+        print("1️⃣ الأوامر...")
+        handle_commands()
+        now = datetime.utcnow()
+        print("2️⃣ التعلم...")
+        fast_learning()
+        if now.hour == 10:
+            print("3️⃣ مراجعة يومية...")
+            learn_from_predictions()
+        if now.hour == 9 and now.minute < 10:
+            print("4️⃣ أخبار...")
+            send_daily_news_report()
+            
+    if run_mode in ['all', 'scan']:
+        print("5️⃣ فحص...")
+        run_scan()
+        
     print("✅ انتهى")
