@@ -3,14 +3,14 @@
   "risk_percent": 2.0,
   "rsi_threshold": 25,
   "accuracy_score": 0.14,
-  "total_predictions": 8610,
-  "correct_predictions": 1201,
+  "total_predictions": 8690,
+  "correct_predictions": 1215,
   "last_adjustment": null,
-  "last_fast_learning": "2026-10-30T19:29:52.928137",
+  "last_fast_learning": "2026-10-30T20:57:14.858073",
   "mistake_patterns": {
-    "high_rsi": 4708,
-    "low_volume": 5023,
-    "weak_trend": 803,
-    "wrong_macd": 229
+    "high_rsi": 4716,
+    "low_volume": 5042,
+    "weak_trend": 807,
+    "wrong_macd": 242
   }
 }
