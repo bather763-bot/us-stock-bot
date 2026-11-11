@@ -6,7 +6,7 @@
   "total_predictions": 8820,
   "correct_predictions": 1226,
   "last_adjustment": null,
-  "last_fast_learning": "2026-11-11T00:56:16.075444",
+  "last_fast_learning": "2026-11-11T21:08:06.830507",
   "mistake_patterns": {
     "high_rsi": 4733,
     "low_volume": 5068,
